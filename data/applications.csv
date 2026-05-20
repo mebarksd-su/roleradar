@@ -1,18 +1,19 @@
-Date Added,Company,Role,Location,Status,Job Link,Notes,Work Arrangement,Days Since Applied,Application Health,Recommendation,Priority
-2026-05-11,Google,Junior Data analyst,NYC,Interviewing,,"best job ever!
+Date Added,Company,Role,Location,Work Arrangement,Status,Job Link,Notes,Days Since Applied,Application Health,Recommendation,Priority
+2026-05-11,Google,Junior Data analyst,NYC,Not Specified,Interviewing,,"best job ever!
 xnnne
 smx
 
-",Not Specified,7.0,Follow Up Soon,Consider following up,High Priority
-2026-05-11,Google,Data analyst intern,Boston,Interviewing,,,Not Specified,7.0,Follow Up Soon,Consider following up,High Priority
-2026-05-11,JP Morgan,Data analyst intern,Philidelphia,Interviewing,,,Not Specified,7.0,Follow Up Soon,Consider following up,High Priority
-2026-05-11,Upstate Medical,Data analyst intern,Syracuse,Offer,,"lets go!!!
-",Not Specified,7.0,Follow Up Soon,No action needed,High Priority
-2026-05-11,Apple,Intern,CA,Offer,,,Remote,7.0,Follow Up Soon,No action needed,High Priority
-2026-05-12,Sony Music,Data Intern,NYC,Offer,,I cant wait,Hybrid,6.0,Fresh,No action needed,High Priority
-2026-05-12,Cowboy City,Head Data Sherrif,Texas,Offer,,,On-site,6.0,Fresh,No action needed,High Priority
-2026-05-12,Mcdonalds Corp,Data Analyst,Mn,Applied,,,Remote,6.0,Fresh,Wait for response,Medium Priority
-2026-05-12,TEST5,Analyst,Va,Interviewing,,,Hybrid,6.0,Fresh,Wait for response,High Priority
-2026-05-12,TEST6,Analyst,MA,Interviewing,,,Not Specified,6.0,Fresh,Wait for response,High Priority
-2026-05-15,Spotify,Data Analytics Intern,Not Specified,Rejected,https://careers.spotify.com/us/en/job/spotify-data-analytics-intern,,Remote,3.0,Fresh,No action needed,Low Priority
-2026-05-18,SRC,Data Quality Intern,Syracuse Ny,Applied,https://syr.joinhandshake.com/jobs/11028183,,On-site,,,,
+",9.0,Follow Up Soon,Consider following up,High Priority
+2026-05-11,Google,Data analyst intern,Boston,Not Specified,Interviewing,,,9.0,Follow Up Soon,Consider following up,High Priority
+2026-05-11,JP Morgan,Data analyst intern,Philidelphia,Not Specified,Interviewing,,,9.0,Follow Up Soon,Consider following up,High Priority
+2026-05-11,Upstate Medical,Data analyst intern,Syracuse,Not Specified,Offer,,"lets go!!!
+",9.0,Follow Up Soon,No action needed,High Priority
+2026-05-12,Sony Music,Data Intern,NYC,Hybrid,Offer,,I cant wait,8.0,Follow Up Soon,No action needed,High Priority
+2026-05-12,Cowboy City,Head Data Sherrif,Texas,On-site,Offer,,,8.0,Follow Up Soon,No action needed,High Priority
+2026-05-12,Mcdonalds Corp,Data Analyst,Mn,Remote,Offer,,,8.0,Follow Up Soon,No action needed,High Priority
+2026-05-12,TEST5,Analyst,Va,Hybrid,Applied,,,8.0,Follow Up Soon,Consider following up,Medium Priority
+2026-05-12,TEST6,Analyst,MA,Not Specified,Interviewing,,,8.0,Follow Up Soon,Consider following up,High Priority
+2026-05-15,Spotify,Data Analytics Intern,Not Specified,Remote,Interviewing,https://careers.spotify.com/us/en/job/spotify-data-analytics-intern,,5.0,Fresh,Wait for response,High Priority
+2026-05-18,SRC,Data Quality Intern,Syracuse Ny,On-site,Rejected,https://syr.joinhandshake.com/jobs/11028183,,2.0,Fresh,No action needed,Low Priority
+2026-05-20,Apple,Data Analyst Applied Data Science Team Corsv,CA,On-site,Applied,https://jobs.apple.com/en-us/details/200653878-0836/legal-data-analyst-applied-data-science?team=CORSV,,0.0,Fresh,Wait for response,Medium Priority
+2026-05-20,Apple,Data Analyst Applied Data Science Team Corsv,,On-site,Applied,https://jobs.apple.com/en-us/details/200653878-0836/legal-data-analyst-applied-data-science?team=CORSV,,,,,

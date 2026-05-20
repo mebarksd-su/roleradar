@@ -2,9 +2,21 @@ import streamlit as st
 import pandas as pd
 from datetime import date
 
-from utils.data_manager import save_applications
+from utils.database import (
+    insert_application,
+    update_application,
+    delete_application
+)
 from utils.recommendation_engine import generate_recommendations
+
 from utils.job_link_parser import infer_application_details_from_link
+from config.constants import (
+    APPLICATION_STATUSES,
+    FILTER_STATUS_OPTIONS,
+    FOLLOW_UP_TYPES,
+    WORK_ARRANGEMENTS,
+    APP_TAGLINE
+)
 
 
 # =========================
@@ -14,9 +26,7 @@ def render_command_center_page(df):
 
     st.title("Command Center")
 
-    st.write(
-        "Track applications, monitor progress, and turn job search activity into career intelligence."
-    )
+    st.write(APP_TAGLINE)
 
     # =========================
     # ADD NEW APPLICATION
@@ -115,22 +125,12 @@ def render_command_center_page(df):
 
         work_arrangement = st.selectbox(
             "Work Arrangement",
-            [
-                "Not Specified",
-                "Remote",
-                "Hybrid",
-                "On-site"
-            ]
+            WORK_ARRANGEMENTS
         )
 
         status = st.selectbox(
             "Application Status",
-            [
-                "Applied",
-                "Interviewing",
-                "Rejected",
-                "Offer"
-            ]
+            APPLICATION_STATUSES
         )
 
         notes = st.text_area(
@@ -163,12 +163,7 @@ def render_command_center_page(df):
                     "Notes": notes.strip()
                 }
 
-                df = pd.concat(
-                    [df, pd.DataFrame([new_application])],
-                    ignore_index=True
-                )
-
-                save_applications(df)
+                insert_application(new_application)
 
                 st.session_state[
                     "success_message"
@@ -348,8 +343,13 @@ def render_command_center_page(df):
 
     recent_df = df.tail(5)
 
+    display_recent_df = recent_df.drop(
+        columns=["Application ID"],
+        errors="ignore"
+    )
+
     st.dataframe(
-        recent_df,
+        display_recent_df,
         width="stretch",
         hide_index=True
     )
@@ -371,11 +371,7 @@ def render_command_center_page(df):
 
         followup_type = st.selectbox(
             "Follow-Up Type",
-            [
-                "Post-Application Follow-Up",
-                "Interview Thank You",
-                "Recruiter Networking Message"
-            ]
+            FOLLOW_UP_TYPES
         )
 
         generate_followup = st.button(
@@ -545,13 +541,7 @@ Your Name
 
     status_filter = st.selectbox(
         "Filter by Status",
-        [
-            "All",
-            "Applied",
-            "Interviewing",
-            "Rejected",
-            "Offer"
-        ],
+        FILTER_STATUS_OPTIONS,
         key="manage_status_filter"
     )
 
@@ -597,6 +587,7 @@ Your Name
     header8.write("**Action**")
 
     for index, row in filtered_df.iterrows():
+        application_id = int(row.get("Application ID"))
 
         col1, col2, col3, col4, col5, col6, col7, col8 = st.columns(
             [2, 2, 2, 2, 2, 3, 1, 1]
@@ -613,17 +604,10 @@ Your Name
             else "Not Specified"
         )
 
-        status_options = [
-            "Applied",
-            "Interviewing",
-            "Rejected",
-            "Offer"
-        ]
-
         new_status = col5.selectbox(
             "Status",
-            status_options,
-            index=status_options.index(row["Status"]),
+            APPLICATION_STATUSES,
+            index=APPLICATION_STATUSES.index(row["Status"]),
             key=f"status_update_{index}",
             label_visibility="collapsed"
         )
@@ -637,18 +621,32 @@ Your Name
 
         if col7.button(
             "Save",
-            key=f"save_notes_{index}"
+            key=f"save_notes_{application_id}"
         ):
-            df.loc[index, "Notes"] = updated_notes
-            save_applications(df)
+            updated_application = row.to_dict()
+            updated_application["Notes"] = updated_notes
+            updated_application["Status"] = new_status
+
+            update_application(
+                application_id,
+                updated_application
+            )
+
             st.session_state[
                 "toast_message"
             ] = f"Saved notes for {row['Company']}"
             st.rerun()
 
         if new_status != row["Status"]:
-            df.loc[index, "Status"] = new_status
-            save_applications(df)
+            updated_application = row.to_dict()
+            updated_application["Status"] = new_status
+            updated_application["Notes"] = updated_notes
+
+            update_application(
+                application_id,
+                updated_application
+            )
+
             st.success(
                 f"Updated {row['Company']} status to {new_status}."
             )
@@ -656,11 +654,9 @@ Your Name
 
         if col8.button(
             "Delete",
-            key=f"delete_{index}"
+            key=f"delete_{application_id}"
         ):
-            df = df.drop(index=index)
-            df = df.reset_index(drop=True)
-            save_applications(df)
+            delete_application(application_id)
             st.success("Application deleted successfully.")
             st.rerun()
 
@@ -678,14 +674,19 @@ Your Name
             format_func=lambda x: f"{df.loc[x, 'Company']} - {df.loc[x, 'Role']}"
         )
 
+        selected_application_id = int(
+            df.loc[
+                delete_index,
+                "Application ID"
+            ]
+        )
+
         delete_button = st.button(
             "Delete Selected Application"
         )
 
         if delete_button:
-            df = df.drop(index=delete_index)
-            df = df.reset_index(drop=True)
-            save_applications(df)
+            delete_application(selected_application_id)
             st.success("Application deleted successfully.")
             st.rerun()
 

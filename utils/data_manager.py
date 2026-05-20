@@ -1,5 +1,10 @@
 import os
 import pandas as pd
+from utils.database import (
+    initialize_database,
+    fetch_applications,
+    replace_applications_from_dataframe
+)
 
 
 DATA_FILE = "data/applications.csv"
@@ -78,41 +83,30 @@ def normalize_work_arrangement(work_arrangement):
 
 def load_applications():
 
-    if os.path.exists(DATA_FILE):
-        try:
-            df = pd.read_csv(DATA_FILE)
-        except pd.errors.EmptyDataError:
-            df = pd.DataFrame(columns=APPLICATION_COLUMNS)
-            df.to_csv(DATA_FILE, index=False)
-        except pd.errors.ParserError:
-            df = pd.DataFrame(columns=APPLICATION_COLUMNS)
-            df.to_csv(DATA_FILE, index=False)
+    initialize_database()
 
-        if "Last Updated" in df.columns:
-            df = df.drop(columns=["Last Updated"])
-            df.to_csv(DATA_FILE, index=False)
+    df = fetch_applications()
 
-        if "Work Arrangement" not in df.columns:
-            df["Work Arrangement"] = "Not Specified"
+    if df.empty:
+        return pd.DataFrame(columns=APPLICATION_COLUMNS)
 
-        if "Notes" not in df.columns:
-            df["Notes"] = ""
+    if "Work Arrangement" not in df.columns:
+        df["Work Arrangement"] = "Not Specified"
 
-        df["Notes"] = df["Notes"].fillna("").astype(str)
-        df["Location"] = df["Location"].apply(normalize_location)
-        df["Status"] = df["Status"].apply(normalize_status)
-        df["Work Arrangement"] = df["Work Arrangement"].apply(normalize_work_arrangement)
+    if "Notes" not in df.columns:
+        df["Notes"] = ""
 
-        
-        df.to_csv(DATA_FILE, index=False)
-
-    else:
-        df = pd.DataFrame(columns=APPLICATION_COLUMNS)
+    df["Notes"] = df["Notes"].fillna("").astype(str)
+    df["Location"] = df["Location"].apply(normalize_location)
+    df["Status"] = df["Status"].apply(normalize_status)
+    df["Work Arrangement"] = df["Work Arrangement"].apply(normalize_work_arrangement)
 
     return df
 
-
 def save_applications(df):
 
-    os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
-    df.to_csv(DATA_FILE, index=False)
+    initialize_database()
+
+    replace_applications_from_dataframe(df)
+
+    

@@ -27,6 +27,8 @@ from utils.openai_client import (
     summarize_job_description_with_ai
 )
 
+from utils.session_manager import clear_radar_lab_state
+
 
 def render_radar_lab_page():
     st.caption("Upload a resume, paste a job description, and let RoleRadar evaluate skill match, alignment, priority gaps, and improvement steps.")
@@ -37,6 +39,10 @@ def render_radar_lab_page():
     # -------------------------
 
     st.header("Role Match Scanner")
+
+    if st.button("Clear Current Analysis"):
+        clear_radar_lab_state()
+        st.rerun()
 
     resume_text = ""
     skills_section_found = False
@@ -205,32 +211,32 @@ def render_radar_lab_page():
         # based on missing skills.
         # =========================
 
-        st.subheader("Suggested Resume Bullets")
+        with st.expander("Suggested Resume Bullets", expanded=False):
 
-        if missing_skills:
-            for skill in missing_skills:
-                suggested_bullet = generate_resume_bullet(skill)
-                st.success(
-                    f"{skill}: {suggested_bullet}"
-                )
-        else:
-            st.write("No resume improvement suggestions needed right now.")
+            if missing_skills:
+                for skill in missing_skills:
+                    suggested_bullet = generate_resume_bullet(skill)
+                    st.success(
+                        f"{skill}: {suggested_bullet}"
+                    )
+            else:
+                st.write("No resume improvement suggestions needed right now.")
 
         # =========================
         # PRIORITY SKILL GAPS
         # Highlights the most important missing skills for the detected role.
         # =========================
 
-        st.subheader("Priority Skill Gaps")
+        with st.expander("Priority Skill Gaps", expanded=False):
 
-        if critical_missing:
-            for skill in critical_missing:
-                st.error(
-                    f"{skill}: This is a higher-priority gap for this type of role. "
-                    "Consider adding a project, bullet, or experience that demonstrates this skill."
-                )
-        else:
-            st.write("No priority skill gaps detected.")
+            if critical_missing:
+                for skill in critical_missing:
+                    st.error(
+                        f"{skill}: This is a higher-priority gap for this type of role. "
+                        "Consider adding a project, bullet, or experience that demonstrates this skill."
+                    )
+            else:
+                st.write("No priority skill gaps detected.")
 
         st.subheader("AI Gap Explanation")
 
@@ -242,45 +248,47 @@ def render_radar_lab_page():
         else:
             st.write("No AI gap explanation needed because no missing skills were detected.")
 
-        st.subheader("Radar Insights")
-        for insight in smart_analysis:
-            st.info(insight)
+        with st.expander("Radar Insights", expanded=False):
 
-        st.subheader("Fit Summary")
-        st.info(f"Radar Status: {fit_analysis['label']}")
-        st.write(f"Summary: {fit_analysis['summary']}")
-        st.write(f"Effort Needed: {fit_analysis['effort_level']}")
-        st.write(f"Recommended Next Step: {fit_analysis['next_action']}")
+            for insight in smart_analysis:
+                st.info(insight)
+
+        with st.expander("Fit Summary", expanded=True):
+
+            st.info(f"Radar Status: {fit_analysis['label']}")
+            st.write(f"Summary: {fit_analysis['summary']}")
+            st.write(f"Effort Needed: {fit_analysis['effort_level']}")
+            st.write(f"Recommended Next Step: {fit_analysis['next_action']}")
 
         
-        st.subheader("Resume Action Plan")
+        with st.expander("Resume Action Plan", expanded=False):
 
-        for item in action_plan:
+            for item in action_plan:
 
-            st.markdown(f"### {item['title']}")
+                st.markdown(f"### {item['title']}")
 
-            st.write("**Why This Matters**")
-            st.write(item["why_it_matters"])
+                st.write("**Why This Matters**")
+                st.write(item["why_it_matters"])
 
-            st.write("**Suggested Improvement**")
-            st.write(item["suggested_project"])
+                st.write("**Suggested Improvement**")
+                st.write(item["suggested_project"])
 
-            st.write("**Skills You’ll Gain**")
+                st.write("**Skills You’ll Gain**")
 
-            for skill in item["skills_gained"]:
-                st.write(f"• {skill}")
+                for skill in item["skills_gained"]:
+                    st.write(f"• {skill}")
 
-            st.write("**Resources**")
+                st.write("**Resources**")
 
-            for resource in item["resources"]:
-                st.markdown(
-                    f"- [{resource['title']}]({resource['url']}) ({resource['type']})"
-                )
+                for resource in item["resources"]:
+                    st.markdown(
+                        f"- [{resource['title']}]({resource['url']}) ({resource['type']})"
+                    )
 
-            st.write(f"**Difficulty:** {item['difficulty']}")
-            st.write(f"**Estimated Time:** {item['estimated_time']}")
+                st.write(f"**Difficulty:** {item['difficulty']}")
+                st.write(f"**Estimated Time:** {item['estimated_time']}")
 
-            st.divider()
+                st.divider()
 
         st.subheader("Overall Recommendation")
 
