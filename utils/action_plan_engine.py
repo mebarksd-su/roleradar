@@ -51,9 +51,9 @@ def generate_action_plan(fit_analysis, missing_skills, semantic_score):
                     "https://careerservices.fas.harvard.edu/resources/create-a-strong-resume/"
                 ),
                 build_resource(
-                    "Indeed Resume Keywords Guide",
+                    "Linkedin Resume Writing Tips",
                     "article",
-                    "https://www.indeed.com/career-advice/resumes-cover-letters/resume-keywords"
+                    "https://www.linkedin.com/business/learning/blog/career-success-tips/how-to-write-a-resume-that-will-actually-get-a-recruiter-s-atten"
                 ),
                 build_resource(
                     "YouTube: Resume Bullet Writing for Internships",

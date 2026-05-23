@@ -2,21 +2,25 @@ import streamlit as st
 import pandas as pd
 from datetime import date
 
-from utils.database import (
-    insert_application,
-    update_application,
-    delete_application
-)
-from utils.recommendation_engine import generate_recommendations
+from utils.database import insert_application
 
 from utils.job_link_parser import infer_application_details_from_link
 from config.constants import (
     APPLICATION_STATUSES,
     FILTER_STATUS_OPTIONS,
-    FOLLOW_UP_TYPES,
     WORK_ARRANGEMENTS,
     APP_TAGLINE
 )
+
+from views.components.dashboard_metrics import render_dashboard_metrics
+from views.components.followup_generator import render_followup_generator
+from views.components.application_breakdown import render_application_breakdown
+from views.components.application_activity import render_application_activity
+from views.components.recent_applications import render_recent_applications
+from views.components.strategy_insights import render_strategy_insights
+from views.components.delete_application_section import render_delete_application_section
+from views.components.application_table import render_application_table
+
 
 
 # =========================
@@ -212,31 +216,12 @@ def render_command_center_page(df):
             1
         )
 
-    col1, col2, col3, col4, col5 = st.columns(5)
-
-    col1.metric(
-        "Total Applications",
-        total_applications
-    )
-
-    col2.metric(
-        "Applied",
-        applied_count
-    )
-
-    col3.metric(
-        "Interviews",
-        interview_count
-    )
-
-    col4.metric(
-        "Offers",
-        offer_count
-    )
-
-    col5.metric(
-        "Interview Rate",
-        f"{conversion_rate}%"
+    render_dashboard_metrics(
+        total_applications,
+        applied_count,
+        interview_count,
+        offer_count,
+        conversion_rate
     )
 
     st.write(
@@ -248,77 +233,7 @@ def render_command_center_page(df):
     # APPLICATION BREAKDOWN
     # =========================
 
-    st.header("Application Breakdown")
-
-    breakdown_col1, breakdown_col2 = st.columns(2)
-
-    with breakdown_col1:
-        st.subheader("Status Breakdown")
-
-        status_counts = df["Status"].value_counts().reset_index()
-        status_counts.columns = ["Status", "Applications"]
-
-        st.table(
-            status_counts.style.hide(axis="index")
-        )
-
-        st.subheader("Work Arrangement")
-
-        work_arrangement_counts = (
-            df["Work Arrangement"]
-            .fillna("Not Specified")
-            .replace("", "Not Specified")
-            .value_counts()
-            .reset_index()
-        )
-
-        work_arrangement_counts.columns = [
-            "Work Arrangement",
-            "Applications"
-        ]
-
-        st.table(
-            work_arrangement_counts.style.hide(axis="index")
-        )
-
-    with breakdown_col2:
-        st.subheader("Most Applied Companies")
-
-        company_counts = (
-            df["Company"]
-            .value_counts()
-            .head(3)
-            .reset_index()
-        )
-
-        company_counts.columns = [
-            "Company",
-            "Applications"
-        ]
-
-        st.table(
-            company_counts.style.hide(axis="index")
-        )
-
-        st.subheader("Most Applied Locations")
-
-        location_counts = (
-            df["Location"]
-            .replace("", "Unknown")
-            .fillna("Unknown")
-            .value_counts()
-            .head(3)
-            .reset_index()
-        )
-
-        location_counts.columns = [
-            "Location",
-            "Applications"
-        ]
-
-        st.table(
-            location_counts.style.hide(axis="index")
-        )
+    render_application_breakdown(df)
 
     # =========================
     # EXPORT DATA
@@ -339,192 +254,35 @@ def render_command_center_page(df):
     # RECENT APPLICATIONS
     # =========================
 
-    st.subheader("Recent Applications")
-
-    recent_df = df.tail(5)
-
-    display_recent_df = recent_df.drop(
-        columns=["Application ID"],
-        errors="ignore"
-    )
-
-    st.dataframe(
-        display_recent_df,
-        width="stretch",
-        hide_index=True
-    )
+    render_recent_applications(df)
 
     # =========================
     # AI FOLLOW-UP GENERATOR
     # =========================
 
-    st.header("AI Follow-Up Generator")
-
-    if len(df) > 0:
-
-        selected_application = st.selectbox(
-            "Select Application",
-            df.index,
-            format_func=lambda x: f"{df.loc[x, 'Company']} - {df.loc[x, 'Role']}",
-            key="followup_select"
-        )
-
-        followup_type = st.selectbox(
-            "Follow-Up Type",
-            FOLLOW_UP_TYPES
-        )
-
-        generate_followup = st.button(
-            "Generate Follow-Up Message"
-        )
-
-        if generate_followup:
-
-            selected_company = df.loc[
-                selected_application,
-                "Company"
-            ]
-
-            selected_role = df.loc[
-                selected_application,
-                "Role"
-            ]
-
-            generated_message = ""
-
-            if followup_type == "Post-Application Follow-Up":
-
-                generated_message = f"""
-Hello {selected_company} Hiring Team,
-
-I hope you are doing well. I recently applied for the {selected_role} position and wanted to follow up regarding my application status.
-
-I remain very interested in the opportunity and would love the chance to contribute my skills and experience to your team.
-
-Thank you for your time and consideration. I look forward to hearing from you.
-
-Best,
-Your Name
-"""
-
-            elif followup_type == "Interview Thank You":
-
-                generated_message = f"""
-Hello {selected_company} Team,
-
-Thank you again for taking the time to speak with me regarding the {selected_role} opportunity.
-
-I enjoyed learning more about the role and the company, and the conversation further increased my interest in joining your team.
-
-I appreciate your consideration and look forward to hearing about next steps.
-
-Best,
-Your Name
-"""
-
-            elif followup_type == "Recruiter Networking Message":
-
-                generated_message = f"""
-Hello,
-
-I hope you are doing well. My name is [Your Name], and I am very interested in opportunities related to the {selected_role} position at {selected_company}.
-
-I would love to connect and learn more about potential opportunities within your organization.
-
-Thank you for your time, and I hope to stay connected.
-
-Best,
-Your Name
-"""
-
-            st.subheader("Generated Follow-Up Message")
-
-            st.code(
-                generated_message,
-                language="markdown"
-            )
+    render_followup_generator(df)
 
     # =========================
     # APPLICATION ACTIVITY
     # =========================
 
-    st.header("Application Activity")
-
-    timeline_df = df.copy()
-
-    timeline_df["Date Added"] = pd.to_datetime(
-        timeline_df["Date Added"]
-    ).dt.date
-
-    applications_over_time = (
-        timeline_df.groupby("Date Added")
-        .size()
-        .reset_index(name="Applications Added")
-        .sort_values(by="Date Added", ascending=False)
-    )
-
-    if len(applications_over_time) > 0:
-        st.table(
-            applications_over_time.head(7).style.hide(axis="index")
-        )
-    else:
-        st.info("No application activity tracked yet.")
+    render_application_activity(df)
 
     # =========================
     # APPLICATION STRATEGY INSIGHTS
     # =========================
 
-    st.header("Application Strategy Insights")
-
-    rejection_rate = round(
-        (
-            len(df[df["Status"] == "Rejected"])
-            / total_applications
-        ) * 100,
-        1
-    ) if total_applications > 0 else 0
-
-    offer_rate = round(
-        (
-            len(df[df["Status"] == "Offer"])
-            / total_applications
-        ) * 100,
-        1
-    ) if total_applications > 0 else 0
-
-    insight_col1, insight_col2 = st.columns(2)
-
-    insight_col1.metric(
-        "Rejection Rate",
-        f"{rejection_rate}%"
+    rejected_count = len(
+        df[df["Status"] == "Rejected"]
     )
 
-    insight_col2.metric(
-        "Offer Rate",
-        f"{offer_rate}%"
+    render_strategy_insights(
+        total_applications,
+        interview_count,
+        offer_count,
+        rejected_count,
+        conversion_rate
     )
-
-    st.subheader("Strategic Insights")
-
-    recommendations = generate_recommendations(df)
-
-    for recommendation in recommendations:
-        recommendation_lower = recommendation.lower()
-
-        if (
-            "strong" in recommendation_lower
-            or "effective" in recommendation_lower
-        ):
-            st.success(recommendation)
-
-        elif (
-            "low" in recommendation_lower
-            or "high rejection" in recommendation_lower
-        ):
-            st.warning(recommendation)
-
-        else:
-            st.info(recommendation)
 
     # =========================
     # MANAGE APPLICATIONS
@@ -571,124 +329,10 @@ Your Name
         f"Showing {len(filtered_df)} matching applications."
     )
 
-    st.subheader("Application List")
-
-    header1, header2, header3, header4, header5, header6, header7, header8 = st.columns(
-        [2, 2, 2, 2, 2, 3, 1, 1]
-    )
-
-    header1.write("**Company**")
-    header2.write("**Role**")
-    header3.write("**Current Status**")
-    header4.write("**Location**")
-    header5.write("**Update Status**")
-    header6.write("**Notes**")
-    header7.write("**Save**")
-    header8.write("**Action**")
-
-    for index, row in filtered_df.iterrows():
-        application_id = int(row.get("Application ID"))
-
-        col1, col2, col3, col4, col5, col6, col7, col8 = st.columns(
-            [2, 2, 2, 2, 2, 3, 1, 1]
-        )
-
-        col1.write(row["Company"])
-        col2.write(row["Role"])
-        col3.write(row["Status"])
-
-        col4.write(
-            row["Location"]
-            if pd.notna(row["Location"])
-            and row["Location"] != ""
-            else "Not Specified"
-        )
-
-        new_status = col5.selectbox(
-            "Status",
-            APPLICATION_STATUSES,
-            index=APPLICATION_STATUSES.index(row["Status"]),
-            key=f"status_update_{index}",
-            label_visibility="collapsed"
-        )
-
-        updated_notes = col6.text_area(
-            "Notes",
-            value=row["Notes"] if pd.notna(row["Notes"]) else "",
-            key=f"notes_{index}",
-            label_visibility="collapsed"
-        )
-
-        if col7.button(
-            "Save",
-            key=f"save_notes_{application_id}"
-        ):
-            updated_application = row.to_dict()
-            updated_application["Notes"] = updated_notes
-            updated_application["Status"] = new_status
-
-            update_application(
-                application_id,
-                updated_application
-            )
-
-            st.session_state[
-                "toast_message"
-            ] = f"Saved notes for {row['Company']}"
-            st.rerun()
-
-        if new_status != row["Status"]:
-            updated_application = row.to_dict()
-            updated_application["Status"] = new_status
-            updated_application["Notes"] = updated_notes
-
-            update_application(
-                application_id,
-                updated_application
-            )
-
-            st.success(
-                f"Updated {row['Company']} status to {new_status}."
-            )
-            st.rerun()
-
-        if col8.button(
-            "Delete",
-            key=f"delete_{application_id}"
-        ):
-            delete_application(application_id)
-            st.success("Application deleted successfully.")
-            st.rerun()
+    render_application_table(filtered_df)
 
     # =========================
     # DELETE APPLICATION
     # =========================
 
-    st.header("Delete Application")
-
-    if len(df) > 0:
-
-        delete_index = st.selectbox(
-            "Select Application to Delete",
-            df.index,
-            format_func=lambda x: f"{df.loc[x, 'Company']} - {df.loc[x, 'Role']}"
-        )
-
-        selected_application_id = int(
-            df.loc[
-                delete_index,
-                "Application ID"
-            ]
-        )
-
-        delete_button = st.button(
-            "Delete Selected Application"
-        )
-
-        if delete_button:
-            delete_application(selected_application_id)
-            st.success("Application deleted successfully.")
-            st.rerun()
-
-    else:
-        st.info("No applications available to delete.")
+    render_delete_application_section(df)

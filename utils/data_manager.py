@@ -1,23 +1,10 @@
-import os
 import pandas as pd
 from utils.database import (
     initialize_database,
     fetch_applications,
     replace_applications_from_dataframe
 )
-
-
-DATA_FILE = "data/applications.csv"
-APPLICATION_COLUMNS = [
-    "Date Added",
-    "Company",
-    "Role",
-    "Location",
-    "Work Arrangement",
-    "Status",
-    "Job Link",
-    "Notes"
-]
+from config.constants import APPLICATION_COLUMNS
 
 def normalize_location(location):
 
@@ -81,6 +68,11 @@ def normalize_work_arrangement(work_arrangement):
 
     return work_map.get(work_arrangement, "Not Specified")
 
+ # =========================
+# APPLICATION DATA MANAGER
+# SQLite is now the source of truth.
+# This layer normalizes database records before the UI renders them.
+# =========================
 def load_applications():
 
     initialize_database()
@@ -103,6 +95,11 @@ def load_applications():
 
     return df
 
+ # =========================
+# SAVE APPLICATIONS
+# Keeps backwards-compatible DataFrame saves while writing to SQLite.
+# CSV export now happens only through the Command Center download button.
+# =========================
 def save_applications(df):
 
     initialize_database()
