@@ -1,8 +1,13 @@
-import streamlit as st
-import pandas as pd
 from datetime import date
+import streamlit as st
 
 from utils.database import insert_application
+from utils.analytics_queries import (
+    get_total_applications,
+    get_interview_count,
+    get_offer_count,
+    get_interview_rate
+)
 
 from utils.job_link_parser import infer_application_details_from_link
 from config.constants import (
@@ -16,7 +21,7 @@ from views.components.dashboard_metrics import render_dashboard_metrics
 from views.components.followup_generator import render_followup_generator
 from views.components.application_breakdown import render_application_breakdown
 from views.components.application_activity import render_application_activity
-from views.components.recent_applications import render_recent_applications
+from views.components.radar_intelligence import render_radar_intelligence
 from views.components.strategy_insights import render_strategy_insights
 from views.components.delete_application_section import render_delete_application_section
 from views.components.application_table import render_application_table
@@ -30,7 +35,7 @@ def render_command_center_page(df):
 
     st.title("Command Center")
 
-    st.write(APP_TAGLINE)
+    st.caption(APP_TAGLINE)
 
     # =========================
     # ADD NEW APPLICATION
@@ -41,7 +46,10 @@ def render_command_center_page(df):
         expanded=st.session_state.get("add_app_expanded", False)
     ):
 
-        st.header("Add New Application")
+        st.subheader("Add New Application")
+        st.caption(
+            "Track a new role manually or use a job link to auto-fill basic details."
+        )
 
         if "company" not in st.session_state:
             st.session_state.company = ""
@@ -139,7 +147,8 @@ def render_command_center_page(df):
 
         notes = st.text_area(
             "Notes",
-            key="notes"
+            key="notes",
+            height=100
         )
 
         submit_button = st.button(
@@ -191,30 +200,15 @@ def render_command_center_page(df):
 
     st.header("Dashboard")
 
-    total_applications = len(df)
+    total_applications = get_total_applications()
 
     applied_count = len(
         df[df["Status"] == "Applied"]
     )
 
-    interview_count = len(
-        df[df["Status"] == "Interviewing"]
-    )
-
-    offer_count = len(
-        df[df["Status"] == "Offer"]
-    )
-
-    conversion_rate = 0
-
-    if total_applications > 0:
-        conversion_rate = round(
-            (
-                interview_count
-                / total_applications
-            ) * 100,
-            1
-        )
+    interview_count = get_interview_count()
+    offer_count = get_offer_count()
+    conversion_rate = get_interview_rate()
 
     render_dashboard_metrics(
         total_applications,
@@ -224,10 +218,11 @@ def render_command_center_page(df):
         conversion_rate
     )
 
-    st.write(
+    st.caption(
         f"You have {total_applications} total applications, "
         f"{interview_count} interviews, and {offer_count} offers tracked."
     )
+    st.divider()
 
     # =========================
     # APPLICATION BREAKDOWN
@@ -239,34 +234,43 @@ def render_command_center_page(df):
     # EXPORT DATA
     # =========================
 
-    st.header("Export Data")
+    with st.expander("Export Application Data", expanded=False):
 
-    csv_data = df.to_csv(index=False).encode("utf-8")
+        st.caption(
+            "Download your tracked applications as a CSV snapshot for backup, reporting, or external analysis."
+        )
 
-    st.download_button(
-        label="Download Applications CSV",
-        data=csv_data,
-        file_name="roleradar_applications.csv",
-        mime="text/csv"
-    )
+        csv_data = df.to_csv(index=False).encode("utf-8")
 
-    # =========================
-    # RECENT APPLICATIONS
-    # =========================
+        st.download_button(
+            label="Download Applications CSV",
+            data=csv_data,
+            file_name="roleradar_applications.csv",
+            mime="text/csv"
+        )
 
-    render_recent_applications(df)
+
 
     # =========================
     # AI FOLLOW-UP GENERATOR
     # =========================
 
-    render_followup_generator(df)
+    with st.expander("AI Follow-Up Generator", expanded=False):
+        render_followup_generator(df)
 
     # =========================
     # APPLICATION ACTIVITY
     # =========================
 
+    st.divider()
     render_application_activity(df)
+
+    # =========================
+    # RADAR INTELLIGENCE
+    # =========================
+
+    with st.expander("Radar Intelligence", expanded=True):
+        render_radar_intelligence()
 
     # =========================
     # APPLICATION STRATEGY INSIGHTS
@@ -288,7 +292,12 @@ def render_command_center_page(df):
     # MANAGE APPLICATIONS
     # =========================
 
+    st.divider()
     st.header("Manage Applications")
+
+    st.caption(
+        "Search, filter, update, and organize your tracked applications from a single command interface."
+    )
 
     st.subheader("Filter Applications")
 
@@ -325,7 +334,7 @@ def render_command_center_page(df):
             filtered_df["Status"] == status_filter
         ]
 
-    st.write(
+    st.caption(
         f"Showing {len(filtered_df)} matching applications."
     )
 
@@ -335,4 +344,5 @@ def render_command_center_page(df):
     # DELETE APPLICATION
     # =========================
 
-    render_delete_application_section(df)
+    with st.expander("Advanced Delete Controls", expanded=False):
+        render_delete_application_section(df)

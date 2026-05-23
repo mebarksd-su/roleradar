@@ -38,18 +38,28 @@ def render_radar_lab_page():
     # Compares resume content against the target job description.
     # -------------------------
 
-    st.header("Role Match Scanner")
+    st.title("Role Match Scanner")
+    st.caption(
+        "Step through the scanner by uploading a resume, pasting a target job description, and running a fresh match analysis."
+    )
 
-    if st.button("Clear Current Analysis"):
+    if "radar_reset_counter" not in st.session_state:
+        st.session_state["radar_reset_counter"] = 0
+
+    if st.button("Reset Scanner"):
         clear_radar_lab_state()
+        st.session_state["radar_reset_counter"] += 1
         st.rerun()
+
+    reset_counter = st.session_state["radar_reset_counter"]
 
     resume_text = ""
     skills_section_found = False
 
     uploaded_resume = st.file_uploader(
-    "Upload Resume PDF",
-    type=["pdf"]
+        "Step 1 — Upload Resume PDF",
+        type=["pdf"],
+        key=f"resume_upload_{reset_counter}"
     )
 
     if uploaded_resume is not None:
@@ -81,20 +91,23 @@ def render_radar_lab_page():
             st.success("Resume uploaded successfully.")
 
             with st.expander("Preview Extracted Resume Text"):
-
                 st.text_area(
                     "Full Extracted Resume Text",
                     extracted_resume,
-                    height=300
+                    height=180
                 )
 
 
     match_job_description = st.text_area(
-        "Paste Job Description for Match Score",
-        height=200
+        "Step 2 — Paste Target Job Description",
+        height=160,
+        key=f"match_job_description_{reset_counter}"
     )
 
-    match_button = st.button("Calculate Match Score")
+    match_button = st.button(
+        "Step 3 — Run Match Analysis",
+        type="primary"
+    )
 
     saved_analysis = load_latest_analysis()
 
@@ -192,6 +205,7 @@ def render_radar_lab_page():
         )
 
         st.subheader("Matched Skills")
+        st.caption("Skills already supported by your current resume content.")
         if matched_skills:
             for skill in matched_skills:
                 st.write(f"• {skill}")
@@ -199,6 +213,7 @@ def render_radar_lab_page():
             st.write("No matching skills found.")
 
         st.subheader("Missing Skills")
+        st.caption("Skills requested by the role but not strongly reflected in your resume.")
         if missing_skills:
             for skill in missing_skills:
                 st.write(f"• {skill}")
@@ -238,22 +253,21 @@ def render_radar_lab_page():
             else:
                 st.write("No priority skill gaps detected.")
 
-        st.subheader("AI Gap Explanation")
-
-        if missing_skills:
-            if ai_gap_explanation["success"]:
-                st.info(ai_gap_explanation["result"])
+        with st.expander("AI Gap Explanation", expanded=False):
+            if missing_skills:
+                if ai_gap_explanation["success"]:
+                    st.info(ai_gap_explanation["result"])
+                else:
+                    st.warning(ai_gap_explanation["error"])
             else:
-                st.warning(ai_gap_explanation["error"])
-        else:
-            st.write("No AI gap explanation needed because no missing skills were detected.")
+                st.write("No AI gap explanation needed because no missing skills were detected.")
 
         with st.expander("Radar Insights", expanded=False):
 
             for insight in smart_analysis:
                 st.info(insight)
 
-        with st.expander("Fit Summary", expanded=True):
+        with st.expander("Fit Summary", expanded=False):
 
             st.info(f"Radar Status: {fit_analysis['label']}")
             st.write(f"Summary: {fit_analysis['summary']}")
@@ -301,35 +315,35 @@ def render_radar_lab_page():
 
     elif saved_analysis:
 
-        match_score = saved_analysis["match_score"]
-        semantic_score = saved_analysis["semantic_score"]
-        final_fit_score = saved_analysis.get("final_fit_score", match_score)
-        signal_strength = saved_analysis.get(
-            "signal_strength",
-            {
-                "label": "Not Available",
-                "score": 0,
-                "summary": "Radar Strength was not saved for this older analysis."
-            }
-        )
+        with st.expander("View Latest Saved Match Snapshot", expanded=False):
 
-        st.subheader("Latest Saved Match Snapshot")
+            match_score = saved_analysis["match_score"]
+            semantic_score = saved_analysis["semantic_score"]
+            final_fit_score = saved_analysis.get("final_fit_score", match_score)
+            signal_strength = saved_analysis.get(
+                "signal_strength",
+                {
+                    "label": "Not Available",
+                    "score": 0,
+                    "summary": "Radar Strength was not saved for this older analysis."
+                }
+            )
 
-        col1, col2, col3, col4 = st.columns(4)
-        col1.metric("Skill Match", f"{match_score}%")
-        col2.metric("Resume Alignment", f"{semantic_score}%")
-        col3.metric("RadarScore", f"{final_fit_score}%")
-        col4.metric("Radar Strength", f"{signal_strength['score']}%")
+            st.caption(
+                "This is your most recent saved result. It is not a new scan. Upload a resume and paste a job description to run a fresh analysis."
+            )
 
-        st.info(
-            "This is your most recent saved score snapshot. "
-            "Upload a resume and paste a new job description to generate a fresh role-specific analysis."
-        )
+            col1, col2, col3, col4 = st.columns(4)
+            col1.metric("Skill Match", f"{match_score}%")
+            col2.metric("Resume Alignment", f"{semantic_score}%")
+            col3.metric("RadarScore", f"{final_fit_score}%")
+            col4.metric("Radar Strength", f"{signal_strength['score']}%")
     # -------------------------
     # ANALYSIS HISTORY VIEWER
     # Shows saved resume analysis history and score trends.
     # -------------------------
 
+    st.divider()
     st.header("Resume Analysis History")
     st.caption("Review previous resume analyses, score trends, and repeated skill gaps.")
 
@@ -430,12 +444,13 @@ def render_radar_lab_page():
     # Detects skills and recommends resume focus areas.
     # -------------------------
 
+    st.divider()
     st.header("Job Description Radar")
     st.caption("Use this when you want to inspect a job description without running a full resume match.")
 
     job_description = st.text_area(
         "Paste Job Description",
-        height=250
+        height=180
     )
 
     analyze_button = st.button("Analyze Job Description")
@@ -483,16 +498,17 @@ def render_radar_lab_page():
     # Strengthens resume bullets and improves role alignment.
     # -------------------------
 
+    st.divider()
     st.header("Rewrite a Resume Bullet")
 
     original_bullet = st.text_area(
         "Paste Resume Bullet",
-        height=150
+        height=120
     )
 
     target_job_description = st.text_area(
         "Paste Target Job Description",
-        height=200
+        height=160
     )
 
     enhance_button = st.button("Enhance Resume Bullet")

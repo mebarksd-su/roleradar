@@ -9,19 +9,25 @@ import streamlit as st
 def render_application_breakdown(df):
 
     st.header("Application Breakdown")
+    st.caption(
+        "Review the current structure of your application pipeline by status and work arrangement."
+    )
 
-    breakdown_col1, breakdown_col2 = st.columns(2)
+    status_col, work_col = st.columns(2)
 
-    with breakdown_col1:
+    with status_col:
         st.subheader("Status Breakdown")
 
         status_counts = df["Status"].value_counts().reset_index()
         status_counts.columns = ["Status", "Applications"]
 
-        st.table(
-            status_counts.style.hide(axis="index")
+        st.dataframe(
+            status_counts,
+            width="stretch",
+            hide_index=True
         )
 
+    with work_col:
         st.subheader("Work Arrangement")
 
         work_arrangement_counts = (
@@ -37,45 +43,8 @@ def render_application_breakdown(df):
             "Applications"
         ]
 
-        st.table(
-            work_arrangement_counts.style.hide(axis="index")
-        )
-
-    with breakdown_col2:
-        st.subheader("Most Applied Companies")
-
-        company_counts = (
-            df["Company"]
-            .value_counts()
-            .head(3)
-            .reset_index()
-        )
-
-        company_counts.columns = [
-            "Company",
-            "Applications"
-        ]
-
-        st.table(
-            company_counts.style.hide(axis="index")
-        )
-
-        st.subheader("Most Applied Locations")
-
-        location_counts = (
-            df["Location"]
-            .replace("", "Unknown")
-            .fillna("Unknown")
-            .value_counts()
-            .head(3)
-            .reset_index()
-        )
-
-        location_counts.columns = [
-            "Location",
-            "Applications"
-        ]
-
-        st.table(
-            location_counts.style.hide(axis="index")
+        st.dataframe(
+            work_arrangement_counts,
+            width="stretch",
+            hide_index=True
         )
